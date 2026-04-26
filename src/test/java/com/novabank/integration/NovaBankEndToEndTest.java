@@ -16,6 +16,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -122,9 +123,12 @@ class NovaBankEndToEndTest {
                 .andExpect(jsonPath("$[?(@.tipo == 'RETIRO')]").exists())
                 .andExpect(jsonPath("$[?(@.tipo == 'TRANSFERENCIA_SALIENTE')]").exists());
 
+        LocalDate inicio = LocalDate.now().minusDays(7);
+        LocalDate fin = LocalDate.now().plusDays(7);
+
         mockMvc.perform(get("/api/cuentas/{id}/movimientos", cuentaOrigenId)
-                        .param("fechaInicio", "2026-04-01")
-                        .param("fechaFin", "2026-04-26")
+                        .param("fechaInicio", inicio.toString())
+                        .param("fechaFin", fin.toString())
                         .header("Authorization", bearer(token)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));

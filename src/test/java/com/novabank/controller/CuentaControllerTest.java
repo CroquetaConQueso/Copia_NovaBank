@@ -96,8 +96,8 @@ class CuentaControllerTest {
 
     @Test
     void listarMovimientosPorRangoDevuelveMovimientosFiltrados() throws Exception {
-        LocalDate inicio = LocalDate.of(2026, 4, 1);
-        LocalDate fin = LocalDate.of(2026, 4, 26);
+        LocalDate inicio = LocalDate.now().minusDays(7);
+        LocalDate fin = LocalDate.now().plusDays(7);
 
         when(operacionService.listarMovimientos(10L, inicio, fin)).thenReturn(List.of(
                 new MovimientoResponseDTO(
@@ -106,24 +106,26 @@ class CuentaControllerTest {
                         "ES91210000000000000001",
                         TipoMovimiento.DEPOSITO,
                         new BigDecimal("100.00"),
-                        LocalDateTime.of(2026, 4, 20, 10, 0)
+                        LocalDateTime.now()
                 )
         ));
 
         mockMvc.perform(get("/api/cuentas/10/movimientos")
-                        .param("fechaInicio", "2026-04-01")
-                        .param("fechaFin", "2026-04-26"))
+                        .param("fechaInicio", inicio.toString())
+                        .param("fechaFin", fin.toString()))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].tipo").value("DEPOSITO"));
     }
 
     @Test
     void listarMovimientosConRangoIncompletoDevuelve400() throws Exception {
-        when(operacionService.listarMovimientos(eq(10L), eq(LocalDate.of(2026, 4, 1)), isNull()))
+        LocalDate inicio = LocalDate.now().minusDays(7);
+
+        when(operacionService.listarMovimientos(eq(10L), eq(inicio), isNull()))
                 .thenThrow(new IllegalArgumentException("Debe informar fechaInicio y fechaFin para filtrar por rango"));
 
         mockMvc.perform(get("/api/cuentas/10/movimientos")
-                        .param("fechaInicio", "2026-04-01"))
+                        .param("fechaInicio", inicio.toString()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
     }
