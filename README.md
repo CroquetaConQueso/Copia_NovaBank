@@ -74,7 +74,7 @@ Responsabilidades principales:
 La aplicacion usa PostgreSQL por defecto. Puede configurarse con variables de entorno:
 
 ```powershell
-$env:NOVABANK_DB_URL="jdbc:postgresql://localhost:5432/NovaBank"
+$env:NOVABANK_DB_URL="jdbc:postgresql://localhost:5432/novabank"
 $env:NOVABANK_DB_USER="postgres"
 $env:NOVABANK_DB_PASSWORD="tu_password"
 $env:JWT_SECRET="novabank-secret-key-for-jwt-generation-2026"
@@ -83,7 +83,7 @@ $env:JWT_EXPIRATION="3600000"
 
 Valores por defecto principales:
 
-- `NOVABANK_DB_URL`: `jdbc:postgresql://localhost:5432/NovaBank`
+- `NOVABANK_DB_URL`: `jdbc:postgresql://localhost:5432/novabank`
 - `NOVABANK_DB_USER`: `postgres`
 - `NOVABANK_DB_PASSWORD`: `postgres`
 - `JWT_EXPIRATION`: `3600000`
@@ -94,7 +94,20 @@ Si la base de datos se crea manualmente, puede usarse como referencia:
 docs/sql/create-database.sql
 ```
 
-`src/main/resources/schema.sql` contiene solo estructura de tablas, constraints e indices. No incluye `CREATE DATABASE` ni comandos `psql`.
+La base de datos del modulo se llama `novabank`.
+
+## Preparar PostgreSQL
+
+La aplicacion no crea automaticamente la base ni las tablas. La configuracion productiva usa `spring.sql.init.mode: never` y `spring.jpa.hibernate.ddl-auto: validate`, por lo que Spring solo valida que el esquema existe y coincide con las entidades.
+
+Orden recomendado:
+
+1. Crear la base de datos con `docs/sql/create-database.sql`.
+2. Ejecutar `src/main/resources/schema.sql` sobre la base `novabank`.
+3. Configurar las variables de entorno de conexion.
+4. Arrancar la aplicacion.
+
+`src/main/resources/schema.sql` contiene solo estructura de tablas, constraints e indices. No incluye `CREATE DATABASE` ni comandos `psql`, y queda como script de referencia/creacion manual.
 
 ## Compilar y probar
 
@@ -205,6 +218,17 @@ docs/postman/NovaBank-Modulo-3.postman_collection.json
 ```
 
 Flujo cubierto: login, creacion de clientes, creacion de cuentas, deposito, retirada, transferencia, consulta de movimientos y validacion de error 422.
+
+## Entrega limpia
+
+Antes de generar un ZIP de entrega:
+
+```bash
+mvn clean
+git archive --format=zip --output NovaBank-Modulo3.zip HEAD
+```
+
+`git archive` genera una entrega de codigo fuente sin incluir `.git/` ni `target/`.
 
 ## Repositorio
 
