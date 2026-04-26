@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
 import java.util.Locale;
 
@@ -39,11 +41,13 @@ public class OperacionService {
 
     @Transactional
     public MovimientoResponseDTO depositar(OperacionRequestDTO request) {
+        validarOperacionRequest(request);
+        BigDecimal cantidad = validarCantidad(request.cantidad());
         Cuenta cuenta = buscarPorNumero(request.numeroCuenta());
 
-        cuenta.setSaldo(cuenta.getSaldo().add(request.cantidad()));
+        cuenta.setSaldo(cuenta.getSaldo().add(cantidad));
         Movimiento movimiento = movimientoRepository.save(
-                movimientoFactory.crearDeposito(cuenta, request.cantidad())
+                movimientoFactory.crearDeposito(cuenta, cantidad)
         );
 
         return movimientoMapper.toResponse(movimiento);
@@ -51,12 +55,14 @@ public class OperacionService {
 
     @Transactional
     public MovimientoResponseDTO retirar(OperacionRequestDTO request) {
+        validarOperacionRequest(request);
+        BigDecimal cantidad = validarCantidad(request.cantidad());
         Cuenta cuenta = buscarPorNumero(request.numeroCuenta());
-        validarSaldoSuficiente(cuenta, request.cantidad());
+        validarSaldoSuficiente(cuenta, cantidad);
 
-        cuenta.setSaldo(cuenta.getSaldo().subtract(request.cantidad()));
+        cuenta.setSaldo(cuenta.getSaldo().subtract(cantidad));
         Movimiento movimiento = movimientoRepository.save(
-                movimientoFactory.crearRetiro(cuenta, request.cantidad())
+                movimientoFactory.crearRetiro(cuenta, cantidad)
         );
 
         return movimientoMapper.toResponse(movimiento);
@@ -64,6 +70,10 @@ public class OperacionService {
 
     @Transactional
     public List<MovimientoResponseDTO> transferir(TransferenciaRequestDTO request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Los datos de la transferencia son obligatorios");
+        }
+
         String origen = normalizarNumeroCuenta(request.numeroCuentaOrigen());
         String destino = normalizarNumeroCuenta(request.numeroCuentaDestino());
 
@@ -71,9 +81,9 @@ public class OperacionService {
             throw new IllegalArgumentException("La cuenta origen y destino deben ser diferentes");
         }
 
+        BigDecimal cantidad = validarCantidad(request.cantidad());
         Cuenta cuentaOrigen = buscarPorNumero(origen);
         Cuenta cuentaDestino = buscarPorNumero(destino);
-        BigDecimal cantidad = request.cantidad();
 
         validarSaldoSuficiente(cuentaOrigen, cantidad);
 
@@ -95,11 +105,40 @@ public class OperacionService {
 
     @Transactional(readOnly = true)
     public List<MovimientoResponseDTO> listarMovimientos(Long cuentaId) {
+        validarCuentaId(cuentaId);
+
         if (!cuentaRepository.existsById(cuentaId)) {
             throw new ResourceNotFoundException("No existe ninguna cuenta con id " + cuentaId);
         }
 
         return movimientoRepository.findByCuentaIdOrderByFechaDesc(cuentaId)
+                .stream()
+                .map(movimientoMapper::toResponse)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<MovimientoResponseDTO> listarMovimientos(Long cuentaId, LocalDate fechaInicio, LocalDate fechaFin) {
+        validarCuentaId(cuentaId);
+
+        if (fechaInicio == null && fechaFin == null) {
+            return listarMovimientos(cuentaId);
+        }
+        if (fechaInicio == null || fechaFin == null) {
+            throw new IllegalArgumentException("Debe informar fechaInicio y fechaFin para filtrar por rango");
+        }
+        if (fechaInicio.isAfter(fechaFin)) {
+            throw new IllegalArgumentException("fechaInicio no puede ser posterior a fechaFin");
+        }
+        if (!cuentaRepository.existsById(cuentaId)) {
+            throw new ResourceNotFoundException("No existe ninguna cuenta con id " + cuentaId);
+        }
+
+        return movimientoRepository.findByCuentaIdAndFechaBetweenOrderByFechaDesc(
+                        cuentaId,
+                        fechaInicio.atStartOfDay(),
+                        fechaFin.atTime(LocalTime.MAX)
+                )
                 .stream()
                 .map(movimientoMapper::toResponse)
                 .toList();
@@ -113,6 +152,10 @@ public class OperacionService {
     }
 
     private String normalizarNumeroCuenta(String numeroCuenta) {
+        if (numeroCuenta == null || numeroCuenta.isBlank()) {
+            throw new IllegalArgumentException("El numero de cuenta es obligatorio");
+        }
+
         return numeroCuenta.trim().toUpperCase(Locale.ROOT);
     }
 
@@ -122,6 +165,29 @@ public class OperacionService {
                     "Saldo insuficiente. Saldo disponible: " + cuenta.getSaldo()
                             + " EUR. Importe solicitado: " + cantidad + " EUR."
             );
+        }
+    }
+
+    private void validarOperacionRequest(OperacionRequestDTO request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Los datos de la operacion son obligatorios");
+        }
+    }
+
+    private BigDecimal validarCantidad(BigDecimal cantidad) {
+        if (cantidad == null) {
+            throw new IllegalArgumentException("La cantidad es obligatoria");
+        }
+        if (cantidad.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("La cantidad debe ser mayor que cero");
+        }
+
+        return cantidad;
+    }
+
+    private void validarCuentaId(Long cuentaId) {
+        if (cuentaId == null || cuentaId <= 0) {
+            throw new IllegalArgumentException("El id de la cuenta debe ser positivo");
         }
     }
 }

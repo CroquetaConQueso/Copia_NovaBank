@@ -53,7 +53,7 @@ class CuentaServiceTest {
                 .build();
 
         when(clienteRepository.findById(1L)).thenReturn(Optional.of(cliente));
-        when(generadorNumeroCuentaStrategy.generarNumeroCuenta()).thenReturn("ES00000000000000000001");
+        when(generadorNumeroCuentaStrategy.generarNumeroCuenta()).thenReturn("ES91210000000000000001");
         when(cuentaRepository.save(any(Cuenta.class))).thenAnswer(invocation -> {
             Cuenta cuenta = invocation.getArgument(0);
             cuenta.setId(10L);
@@ -69,7 +69,7 @@ class CuentaServiceTest {
         Cuenta guardada = captor.getValue();
         assertThat(guardada.getCliente()).isSameAs(cliente);
         assertThat(guardada.getSaldo()).isEqualByComparingTo(BigDecimal.ZERO);
-        assertThat(guardada.getNumeroCuenta()).isEqualTo("ES00000000000000000001");
+        assertThat(guardada.getNumeroCuenta()).isEqualTo("ES91210000000000000001");
         assertThat(response.id()).isEqualTo(10L);
         assertThat(response.clienteId()).isEqualTo(1L);
     }
@@ -81,5 +81,12 @@ class CuentaServiceTest {
         assertThatThrownBy(() -> cuentaService.crearCuenta(new CuentaCreateRequestDTO(99L)))
                 .isInstanceOf(ResourceNotFoundException.class)
                 .hasMessageContaining("cliente");
+    }
+
+    @Test
+    void crearCuentaLanzaErrorSiClienteIdNoEsValido() {
+        assertThatThrownBy(() -> cuentaService.crearCuenta(new CuentaCreateRequestDTO(null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("El id del cliente debe ser positivo");
     }
 }

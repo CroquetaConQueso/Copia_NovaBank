@@ -18,6 +18,8 @@ import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
@@ -83,13 +85,70 @@ class OperacionServiceTest {
     }
 
     @Test
+    void depositarLanzaErrorSiNumeroCuentaEsNulo() {
+        assertThatThrownBy(() -> operacionService.depositar(
+                new OperacionRequestDTO(null, new BigDecimal("50.00"))
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("El numero de cuenta es obligatorio");
+    }
+
+    @Test
+    void depositarLanzaErrorSiCantidadNoEsPositiva() {
+        assertThatThrownBy(() -> operacionService.depositar(
+                new OperacionRequestDTO("ES91210000000000000001", BigDecimal.ZERO)
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("La cantidad debe ser mayor que cero");
+    }
+
+    @Test
+    void listarMovimientosPorRangoValidaFechas() {
+        assertThatThrownBy(() -> operacionService.listarMovimientos(
+                1L,
+                LocalDate.of(2026, 4, 26),
+                LocalDate.of(2026, 4, 1)
+        ))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("fechaInicio no puede ser posterior a fechaFin");
+    }
+
+    @Test
+    void listarMovimientosPorRangoFiltraRepositorio() {
+        Cuenta cuenta = cuenta(1L, "ES91210000000000000001", "25.00");
+        Movimiento movimiento = Movimiento.builder()
+                .id(50L)
+                .cuenta(cuenta)
+                .tipo(TipoMovimiento.DEPOSITO)
+                .cantidad(new BigDecimal("10.00"))
+                .fecha(LocalDateTime.of(2026, 4, 20, 10, 0))
+                .build();
+
+        when(cuentaRepository.existsById(1L)).thenReturn(true);
+        when(movimientoRepository.findByCuentaIdAndFechaBetweenOrderByFechaDesc(
+                any(Long.class),
+                any(LocalDateTime.class),
+                any(LocalDateTime.class)
+        )).thenReturn(List.of(movimiento));
+
+        List<MovimientoResponseDTO> movimientos = operacionService.listarMovimientos(
+                1L,
+                LocalDate.of(2026, 4, 1),
+                LocalDate.of(2026, 4, 26)
+        );
+
+        assertThat(movimientos).hasSize(1);
+        assertThat(movimientos.get(0).tipo()).isEqualTo(TipoMovimiento.DEPOSITO);
+    }
+
+    @Test
     void transferirActualizaAmbasCuentasYRegistraDosMovimientos() {
-        Cuenta origen = cuenta(1L, "ES00000000000000000001", "200.00");
-        Cuenta destino = cuenta(2L, "ES00000000000000000002", "10.00");
+        Cuenta origen = cuenta(1L, "ES91210000000000000001", "200.00");
+        Cuenta destino = cuenta(2L, "ES91210000000000000002", "10.00");
         AtomicLong ids = new AtomicLong(30L);
 
-        when(cuentaRepository.findByNumeroCuenta("ES00000000000000000001")).thenReturn(Optional.of(origen));
-        when(cuentaRepository.findByNumeroCuenta("ES00000000000000000002")).thenReturn(Optional.of(destino));
+        when(cuentaRepository.findByNumeroCuenta("ES91210000000000000001")).thenReturn(Optional.of(origen));
+        when(cuentaRepository.findByNumeroCuenta("ES91210000000000000002")).thenReturn(Optional.of(destino));
         when(movimientoRepository.save(any(Movimiento.class))).thenAnswer(invocation -> {
             Movimiento movimiento = invocation.getArgument(0);
             movimiento.setId(ids.getAndIncrement());
@@ -98,8 +157,8 @@ class OperacionServiceTest {
 
         List<MovimientoResponseDTO> movimientos = operacionService.transferir(
                 new TransferenciaRequestDTO(
-                        "ES00000000000000000001",
-                        "ES00000000000000000002",
+                        "ES91210000000000000001",
+                        "ES91210000000000000002",
                         new BigDecimal("75.00")
                 )
         );

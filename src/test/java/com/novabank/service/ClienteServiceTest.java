@@ -80,4 +80,11 @@ class ClienteServiceTest {
                 .isInstanceOf(DuplicateResourceException.class)
                 .hasMessageContaining("DNI");
     }
+
+    @Test
+    void crearClienteLanzaErrorSiRequestEsNulo() {
+        assertThatThrownBy(() -> clienteService.crearCliente(null))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Los datos del cliente son obligatorios");
+    }
 }

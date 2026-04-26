@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class GeneradorNumeroCuentaSecuencial implements GeneradorNumeroCuentaStrategy {
 
-    private static final String PREFIX = "ES";
+    private static final String PREFIX = "ES91210000";
 
     private final CuentaRepository cuentaRepository;
 
@@ -28,6 +28,6 @@ public class GeneradorNumeroCuentaSecuencial implements GeneradorNumeroCuentaStr
     }
 
     private String formatear(long secuencia) {
-        return PREFIX + String.format("%020d", secuencia);
+        return PREFIX + String.format("%012d", secuencia);
     }
 }

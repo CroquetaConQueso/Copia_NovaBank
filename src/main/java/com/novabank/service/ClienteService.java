@@ -26,6 +26,10 @@ public class ClienteService {
 
     @Transactional
     public ClienteResponseDTO crearCliente(ClienteRequestDTO request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Los datos del cliente son obligatorios");
+        }
+
         ClienteRequestDTO normalizado = normalizar(request);
 
         validarDuplicados(normalizado);
@@ -58,12 +62,20 @@ public class ClienteService {
 
     private ClienteRequestDTO normalizar(ClienteRequestDTO request) {
         return new ClienteRequestDTO(
-                request.nombre().trim(),
-                request.apellidos().trim(),
-                request.dni().trim().toUpperCase(Locale.ROOT),
-                request.email().trim().toLowerCase(Locale.ROOT),
-                request.telefono().trim()
+                normalizarTexto(request.nombre(), "El nombre es obligatorio"),
+                normalizarTexto(request.apellidos(), "Los apellidos son obligatorios"),
+                normalizarTexto(request.dni(), "El DNI es obligatorio").toUpperCase(Locale.ROOT),
+                normalizarTexto(request.email(), "El email es obligatorio").toLowerCase(Locale.ROOT),
+                normalizarTexto(request.telefono(), "El telefono es obligatorio")
         );
+    }
+
+    private String normalizarTexto(String valor, String mensaje) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException(mensaje);
+        }
+
+        return valor.trim();
     }
 
     private void validarDuplicados(ClienteRequestDTO request) {

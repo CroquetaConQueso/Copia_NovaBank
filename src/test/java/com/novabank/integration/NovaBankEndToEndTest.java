@@ -68,6 +68,8 @@ class NovaBankEndToEndTest {
         long cuentaOrigenId = cuentaOrigen.get("id").asLong();
         String numeroOrigen = cuentaOrigen.get("numeroCuenta").asText();
         String numeroDestino = cuentaDestino.get("numeroCuenta").asText();
+        assertThat(numeroOrigen).startsWith("ES91210000");
+        assertThat(numeroDestino).startsWith("ES91210000");
 
         mockMvc.perform(post("/api/operaciones/deposito")
                         .header("Authorization", bearer(token))
@@ -119,6 +121,13 @@ class NovaBankEndToEndTest {
                 .andExpect(jsonPath("$[?(@.tipo == 'DEPOSITO')]").exists())
                 .andExpect(jsonPath("$[?(@.tipo == 'RETIRO')]").exists())
                 .andExpect(jsonPath("$[?(@.tipo == 'TRANSFERENCIA_SALIENTE')]").exists());
+
+        mockMvc.perform(get("/api/cuentas/{id}/movimientos", cuentaOrigenId)
+                        .param("fechaInicio", "2026-04-01")
+                        .param("fechaFin", "2026-04-26")
+                        .header("Authorization", bearer(token)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(3));
     }
 
     private String login() throws Exception {

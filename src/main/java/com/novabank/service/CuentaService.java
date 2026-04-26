@@ -37,8 +37,10 @@ public class CuentaService {
 
     @Transactional
     public CuentaResponseDTO crearCuenta(CuentaCreateRequestDTO request) {
-        Cliente cliente = clienteRepository.findById(request.clienteId())
-                .orElseThrow(() -> new ResourceNotFoundException("No existe ningun cliente con id " + request.clienteId()));
+        Long clienteId = validarId(request == null ? null : request.clienteId(), "El id del cliente debe ser positivo");
+
+        Cliente cliente = clienteRepository.findById(clienteId)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe ningun cliente con id " + clienteId));
 
         Cuenta cuenta = Cuenta.builder()
                 .cliente(cliente)
@@ -56,6 +58,8 @@ public class CuentaService {
 
     @Transactional(readOnly = true)
     public List<CuentaResponseDTO> listarCuentasPorCliente(Long clienteId) {
+        clienteId = validarId(clienteId, "El id del cliente debe ser positivo");
+
         if (!clienteRepository.existsById(clienteId)) {
             throw new ResourceNotFoundException("No existe ningun cliente con id " + clienteId);
         }
@@ -67,11 +71,17 @@ public class CuentaService {
     }
 
     Cuenta buscarCuenta(Long id) {
+        Long cuentaId = validarId(id, "El id de la cuenta debe ser positivo");
+
+        return cuentaRepository.findById(cuentaId)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe ninguna cuenta con id " + cuentaId));
+    }
+
+    private Long validarId(Long id, String mensaje) {
         if (id == null || id <= 0) {
-            throw new IllegalArgumentException("El id de la cuenta debe ser positivo");
+            throw new IllegalArgumentException(mensaje);
         }
 
-        return cuentaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("No existe ninguna cuenta con id " + id));
+        return id;
     }
 }
