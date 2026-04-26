@@ -1,0 +1,32 @@
+spring:
+  application:
+    name: novabank
+  datasource:
+    url: ${NOVABANK_DB_URL:jdbc:postgresql://localhost:5432/novabank}
+    username: ${NOVABANK_DB_USER:postgres}
+    password: ${NOVABANK_DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+  sql:
+    init:
+      mode: never
+
+server:
+  port: ${SERVER_PORT:8080}
+
+jwt:
+  secret: ${JWT_SECRET:novabank-development-secret-key-change-me}
+  expiration: ${JWT_EXPIRATION:86400000}
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+  api-docs:
+    path: /v3/api-docs
