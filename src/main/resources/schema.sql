@@ -1,6 +1,3 @@
-CREATE DATABASE NovaBank;
-\c NovaBank
-
 CREATE TABLE IF NOT EXISTS clientes (
     id BIGSERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
