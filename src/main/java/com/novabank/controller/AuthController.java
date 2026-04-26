@@ -4,6 +4,8 @@ import com.novabank.dto.LoginRequestDTO;
 import com.novabank.dto.LoginResponseDTO;
 import com.novabank.security.JwtService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -29,6 +31,11 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Autenticar usuario", description = "Valida credenciales y devuelve un token JWT Bearer")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Login correcto"),
+            @ApiResponse(responseCode = "400", description = "Request invalido"),
+            @ApiResponse(responseCode = "401", description = "Credenciales invalidas")
+    })
     public ResponseEntity<LoginResponseDTO> login(@Valid @RequestBody LoginRequestDTO request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(request.username(), request.password())

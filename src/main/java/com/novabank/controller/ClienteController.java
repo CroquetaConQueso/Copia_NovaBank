@@ -4,6 +4,8 @@ import com.novabank.dto.ClienteRequestDTO;
 import com.novabank.dto.ClienteResponseDTO;
 import com.novabank.service.ClienteService;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -29,20 +31,36 @@ public class ClienteController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar clientes")
+    @Operation(summary = "Listar clientes", description = "Devuelve todos los clientes registrados")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Clientes obtenidos"),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido")
+    })
     public ResponseEntity<List<ClienteResponseDTO>> listarClientes() {
         return ResponseEntity.ok(clienteService.listarClientes());
     }
 
     @PostMapping
-    @Operation(summary = "Crear cliente")
+    @Operation(summary = "Crear cliente", description = "Crea un cliente validando DNI, email y telefono duplicados")
+    @ApiResponses({
+            @ApiResponse(responseCode = "201", description = "Cliente creado"),
+            @ApiResponse(responseCode = "400", description = "Request invalido"),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido"),
+            @ApiResponse(responseCode = "409", description = "DNI, email o telefono duplicado")
+    })
     public ResponseEntity<ClienteResponseDTO> crearCliente(@Valid @RequestBody ClienteRequestDTO request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(clienteService.crearCliente(request));
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Obtener cliente por id")
+    @Operation(summary = "Obtener cliente por id", description = "Devuelve el detalle de un cliente existente")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cliente encontrado"),
+            @ApiResponse(responseCode = "400", description = "Id invalido"),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido"),
+            @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    })
     public ResponseEntity<ClienteResponseDTO> obtenerCliente(@PathVariable Long id) {
         return ResponseEntity.ok(clienteService.obtenerCliente(id));
     }

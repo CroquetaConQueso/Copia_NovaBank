@@ -49,6 +49,9 @@ Responsabilidades principales:
 - Usuario en memoria para el modulo: `admin/password`.
 - No se incluye entidad `Usuario`, `UsuarioRepository` ni sistema de roles persistido.
 - No se usa `DatabaseConnectionManager`, `RepositoryFactory`, `Connection`, `PreparedStatement`, `ResultSet`, `commit` ni `rollback` en el flujo principal.
+- Las fechas de creacion se asignan desde JPA/aplicacion mediante callbacks `@PrePersist`. Los `DEFAULT CURRENT_TIMESTAMP` del esquema quedan como respaldo de base de datos.
+- Los numeros de cuenta siguen el formato funcional `ES91210000` + 12 digitos secuenciales. La estrategia actual es simple y queda como mejora futura sustituirla por una secuencia de base de datos para concurrencia alta.
+- Las relaciones JPA no usan `CascadeType.ALL` ni `orphanRemoval` para evitar borrados accidentales de historico financiero.
 
 ## Tecnologias
 
@@ -84,6 +87,14 @@ Valores por defecto principales:
 - `NOVABANK_DB_USER`: `postgres`
 - `NOVABANK_DB_PASSWORD`: `postgres`
 - `JWT_EXPIRATION`: `3600000`
+
+Si la base de datos se crea manualmente, puede usarse como referencia:
+
+```text
+docs/sql/create-database.sql
+```
+
+`src/main/resources/schema.sql` contiene solo estructura de tablas, constraints e indices. No incluye `CREATE DATABASE` ni comandos `psql`.
 
 ## Compilar y probar
 
@@ -160,6 +171,7 @@ Authorization: Bearer <token>
 | POST | `/api/operaciones/retiro` | Protegido | Registra retirada |
 | POST | `/api/operaciones/transferencia` | Protegido | Registra transferencia |
 | GET | `/api/cuentas/{id}/movimientos` | Protegido | Lista movimientos de cuenta |
+| GET | `/api/cuentas/{id}/movimientos?fechaInicio=2026-04-01&fechaFin=2026-04-26` | Protegido | Lista movimientos por rango |
 
 ## Errores API
 
@@ -179,6 +191,7 @@ Codigos principales:
 
 - `404`: recurso no encontrado.
 - `422`: saldo insuficiente.
+- `409`: DNI, email o telefono duplicado.
 - `400`: validaciones o datos invalidos.
 - `401`: credenciales invalidas o token ausente/invalido.
 - `500`: error inesperado.

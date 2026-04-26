@@ -60,6 +60,12 @@ Las operaciones de negocio se ejecutan desde servicios transaccionales:
 
 No hay uso de JDBC manual en el flujo principal. Se eliminaron las piezas antiguas del Modulo 2 como `DatabaseConnectionManager`, `RepositoryFactory`, conexiones manuales, `PreparedStatement`, `ResultSet`, `commit` y `rollback`.
 
+La configuracion del perfil `test` se encuentra en `src/test/resources/application-test.yml`, por lo que no se empaqueta como recurso productivo.
+
+`schema.sql` describe la estructura de tablas, constraints e indices. La creacion manual de base de datos queda separada en `docs/sql/create-database.sql`.
+
+Las fechas se asignan desde JPA/aplicacion con callbacks `@PrePersist`. Los `DEFAULT CURRENT_TIMESTAMP` del esquema se mantienen solo como respaldo.
+
 ## 4. DTOs y mappers
 
 Los RequestDTO reciben datos de entrada y aplican validaciones con `jakarta.validation`.
@@ -100,6 +106,7 @@ Decisiones:
 - `/api/auth/**` y Swagger son publicos.
 - El resto de endpoints requiere token JWT.
 - No se crea entidad `Usuario` ni repositorio de usuarios en este modulo.
+- Los errores 401 se devuelven en JSON mediante `JsonAuthenticationEntryPoint`.
 
 ## 6. Manejo global de errores
 
@@ -107,10 +114,11 @@ Decisiones:
 
 Errores cubiertos:
 
-- `ResourceNotFoundException`, `ClienteNotFoundException`, `CuentaNotFoundException`: 404.
-- `InsufficientBalanceException`, `SaldoInsuficienteException`: 422.
+- `ResourceNotFoundException`: 404.
+- `InsufficientBalanceException`: 422.
 - `IllegalArgumentException`: 400.
 - `MethodArgumentNotValidException`: 400 con `fieldErrors`.
+- `DuplicateResourceException`: 409.
 - `AuthenticationException`: 401.
 - `Exception`: 500.
 
@@ -134,6 +142,11 @@ Las respuestas usan `ErrorResponseDTO` con:
 - `POST /api/operaciones/retiro`
 - `POST /api/operaciones/transferencia`
 - `GET /api/cuentas/{id}/movimientos`
+- `GET /api/cuentas/{id}/movimientos?fechaInicio=2026-04-01&fechaFin=2026-04-26`
+
+Los numeros de cuenta se generan con formato `ES91210000` + 12 digitos secuenciales. La estrategia actual es simple; como mejora futura se recomienda sustituirla por una secuencia de base de datos si se requiere robustez ante concurrencia alta.
+
+Las relaciones JPA entre clientes, cuentas y movimientos no usan cascadas agresivas ni `orphanRemoval`, para evitar borrado accidental de historico financiero.
 
 ## 8. Testing por capas
 
