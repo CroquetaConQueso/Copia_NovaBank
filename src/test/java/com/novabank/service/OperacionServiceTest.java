@@ -76,7 +76,7 @@ class OperacionServiceTest {
                 new OperacionRequestDTO("ES00000000000000000001", new BigDecimal("50.00"))
         ))
                 .isInstanceOf(InsufficientBalanceException.class)
-                .hasMessage("SALDO_INSUFICIENTE");
+                .hasMessage("Saldo insuficiente. Saldo disponible: 25.00 EUR. Importe solicitado: 50.00 EUR.");
 
         assertThat(cuenta.getSaldo()).isEqualByComparingTo("25.00");
         verify(movimientoRepository, never()).save(any(Movimiento.class));

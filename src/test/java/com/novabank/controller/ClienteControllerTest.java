@@ -3,6 +3,7 @@ package com.novabank.controller;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.novabank.dto.ClienteRequestDTO;
 import com.novabank.dto.ClienteResponseDTO;
+import com.novabank.exception.DuplicateResourceException;
 import com.novabank.exception.ResourceNotFoundException;
 import com.novabank.service.ClienteService;
 import org.junit.jupiter.api.Test;
@@ -96,6 +97,27 @@ class ClienteControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.code").value("RESOURCE_NOT_FOUND"))
                 .andExpect(jsonPath("$.message").value("No existe ningun cliente con id 99"));
+    }
+
+    @Test
+    void crearClienteDuplicadoDevuelve409() throws Exception {
+        when(clienteService.crearCliente(any(ClienteRequestDTO.class)))
+                .thenThrow(new DuplicateResourceException("Ya existe un cliente con el DNI 12345678A"));
+
+        ClienteRequestDTO request = new ClienteRequestDTO(
+                "Ana",
+                "Garcia",
+                "12345678A",
+                "ana@example.com",
+                "600111222"
+        );
+
+        mockMvc.perform(post("/api/clientes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONFLICT"))
+                .andExpect(jsonPath("$.message").value("Ya existe un cliente con el DNI 12345678A"));
     }
 
     @Test

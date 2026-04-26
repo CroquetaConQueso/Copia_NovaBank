@@ -15,39 +15,31 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler({
-            ResourceNotFoundException.class,
-            ClienteNotFoundException.class,
-            CuentaNotFoundException.class
-    })
-    public ResponseEntity<ErrorResponseDTO> handleNotFound(RuntimeException ex) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponseDTO> handleNotFound(ResourceNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ErrorResponseDTO.of("RESOURCE_NOT_FOUND", ex.getMessage()));
     }
 
-    @ExceptionHandler({
-            InsufficientBalanceException.class,
-            SaldoInsuficienteException.class
-    })
-    public ResponseEntity<ErrorResponseDTO> handleInsufficientBalance(RuntimeException ex) {
+    @ExceptionHandler(InsufficientBalanceException.class)
+    public ResponseEntity<ErrorResponseDTO> handleInsufficientBalance(InsufficientBalanceException ex) {
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                 .body(ErrorResponseDTO.of("SALDO_INSUFICIENTE", ex.getMessage()));
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponseDTO> handleDuplicateResource(DuplicateResourceException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponseDTO.of("CONFLICT", ex.getMessage()));
+    }
+
     @ExceptionHandler({
             IllegalArgumentException.class,
-            ValidationException.class,
-            DuplicateResourceException.class
+            ValidationException.class
     })
     public ResponseEntity<ErrorResponseDTO> handleBadRequest(RuntimeException ex) {
         return ResponseEntity.badRequest()
                 .body(ErrorResponseDTO.of("BAD_REQUEST", ex.getMessage()));
-    }
-
-    @ExceptionHandler(ConflictException.class)
-    public ResponseEntity<ErrorResponseDTO> handleConflict(ConflictException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(ErrorResponseDTO.of("CONFLICT", ex.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -69,7 +61,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(AuthenticationException.class)
     public ResponseEntity<ErrorResponseDTO> handleAuthentication(AuthenticationException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(ErrorResponseDTO.of("UNAUTHORIZED", "Credenciales invalidas"));
+                .body(ErrorResponseDTO.of("UNAUTHORIZED", "Credenciales invalidas."));
     }
 
     @ExceptionHandler(Exception.class)

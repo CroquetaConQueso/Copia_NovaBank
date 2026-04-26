@@ -118,7 +118,10 @@ public class OperacionService {
 
     private void validarSaldoSuficiente(Cuenta cuenta, BigDecimal cantidad) {
         if (cuenta.getSaldo().compareTo(cantidad) < 0) {
-            throw new InsufficientBalanceException("SALDO_INSUFICIENTE");
+            throw new InsufficientBalanceException(
+                    "Saldo insuficiente. Saldo disponible: " + cuenta.getSaldo()
+                            + " EUR. Importe solicitado: " + cantidad + " EUR."
+            );
         }
     }
 }

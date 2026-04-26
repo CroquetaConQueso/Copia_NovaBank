@@ -104,7 +104,10 @@ class NovaBankEndToEndTest {
                                 new OperacionRequestDTO(numeroOrigen, new BigDecimal("1000.00"))
                         )))
                 .andExpect(status().isUnprocessableEntity())
-                .andExpect(jsonPath("$.code").value("SALDO_INSUFICIENTE"));
+                .andExpect(jsonPath("$.code").value("SALDO_INSUFICIENTE"))
+                .andExpect(jsonPath("$.message").value(
+                        "Saldo insuficiente. Saldo disponible: 150.00 EUR. Importe solicitado: 1000.00 EUR."
+                ));
 
         JsonNode cuentaActualizada = getJson("/api/cuentas/" + cuentaOrigenId, token);
         assertThat(cuentaActualizada.get("saldo").decimalValue()).isEqualByComparingTo("150.00");

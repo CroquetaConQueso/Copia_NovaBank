@@ -31,7 +31,7 @@ public class JsonAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setContentType(MediaType.APPLICATION_JSON_VALUE);
         objectMapper.writeValue(
                 response.getOutputStream(),
-                ErrorResponseDTO.of("UNAUTHORIZED", "Autenticacion requerida")
+                ErrorResponseDTO.of("UNAUTHORIZED", "No autenticado o token invalido.")
         );
     }
 }

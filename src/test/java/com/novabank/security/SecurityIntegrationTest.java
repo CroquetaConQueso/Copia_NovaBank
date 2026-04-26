@@ -56,7 +56,7 @@ class SecurityIntegrationTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.message").value("Credenciales invalidas"));
+                .andExpect(jsonPath("$.message").value("Credenciales invalidas."));
     }
 
     @Test
@@ -64,7 +64,7 @@ class SecurityIntegrationTest {
         mockMvc.perform(get("/api/clientes"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.message").value("Autenticacion requerida"));
+                .andExpect(jsonPath("$.message").value("No autenticado o token invalido."));
     }
 
     @Test
@@ -83,7 +83,7 @@ class SecurityIntegrationTest {
                         .header("Authorization", "Bearer token-invalido"))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.code").value("UNAUTHORIZED"))
-                .andExpect(jsonPath("$.message").value("Autenticacion requerida"));
+                .andExpect(jsonPath("$.message").value("No autenticado o token invalido."));
     }
 
     @Test

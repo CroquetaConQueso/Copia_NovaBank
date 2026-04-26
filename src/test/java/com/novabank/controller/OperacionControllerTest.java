@@ -67,7 +67,9 @@ class OperacionControllerTest {
     @Test
     void retiroSinSaldoDevuelve422() throws Exception {
         when(operacionService.retirar(any(OperacionRequestDTO.class)))
-                .thenThrow(new InsufficientBalanceException("SALDO_INSUFICIENTE"));
+                .thenThrow(new InsufficientBalanceException(
+                        "Saldo insuficiente. Saldo disponible: 50.00 EUR. Importe solicitado: 100.00 EUR."
+                ));
 
         OperacionRequestDTO request = new OperacionRequestDTO(
                 "ES00000000000000000001",
@@ -79,7 +81,9 @@ class OperacionControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(jsonPath("$.code").value("SALDO_INSUFICIENTE"))
-                .andExpect(jsonPath("$.message").value("SALDO_INSUFICIENTE"));
+                .andExpect(jsonPath("$.message").value(
+                        "Saldo insuficiente. Saldo disponible: 50.00 EUR. Importe solicitado: 100.00 EUR."
+                ));
     }
 
     @Test
