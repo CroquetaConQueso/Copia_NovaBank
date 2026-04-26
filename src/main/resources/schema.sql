@@ -20,7 +20,6 @@ CREATE TABLE IF NOT EXISTS cuentas (
     CONSTRAINT fk_cuentas_cliente
         FOREIGN KEY (cliente_id)
         REFERENCES clientes(id)
-        ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS movimientos (
@@ -39,7 +38,6 @@ CREATE TABLE IF NOT EXISTS movimientos (
     CONSTRAINT fk_movimientos_cuenta
         FOREIGN KEY (cuenta_id)
         REFERENCES cuentas(id)
-        ON DELETE CASCADE
 );
 
 CREATE INDEX IF NOT EXISTS idx_cuentas_cliente_id

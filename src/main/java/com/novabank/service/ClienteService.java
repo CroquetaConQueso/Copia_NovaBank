@@ -40,7 +40,7 @@ public class ClienteService {
 
     @Transactional(readOnly = true)
     public List<ClienteResponseDTO> listarClientes() {
-        return clienteRepository.findAll()
+        return clienteRepository.findAllWithCuentas()
                 .stream()
                 .map(clienteMapper::toResponse)
                 .toList();
@@ -56,7 +56,7 @@ public class ClienteService {
             throw new IllegalArgumentException("El id del cliente debe ser positivo");
         }
 
-        return clienteRepository.findById(id)
+        return clienteRepository.findByIdWithCuentas(id)
                 .orElseThrow(() -> new ResourceNotFoundException("No existe ningun cliente con id " + id));
     }
 

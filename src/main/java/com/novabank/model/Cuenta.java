@@ -1,6 +1,5 @@
 package com.novabank.model;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -52,7 +51,7 @@ public class Cuenta {
     private LocalDateTime fechaCreacion;
 
     @Builder.Default
-    @OneToMany(mappedBy = "cuenta", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "cuenta")
     private List<Movimiento> movimientos = new ArrayList<>();
 
     @PrePersist
