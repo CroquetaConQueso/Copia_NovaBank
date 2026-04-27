@@ -2,6 +2,8 @@ package com.novabank.config;
 
 import com.novabank.security.JsonAuthenticationEntryPoint;
 import com.novabank.security.JwtFilter;
+import com.novabank.security.JwtService;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -30,9 +32,17 @@ public class SecurityConfig {
     ) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .exceptionHandling(exceptions -> exceptions.authenticationEntryPoint(authenticationEntryPoint))
+                .headers(headers -> headers
+                        .frameOptions(frameOptions -> frameOptions.sameOrigin())
+                )
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .exceptionHandling(exceptions ->
+                        exceptions.authenticationEntryPoint(authenticationEntryPoint)
+                )
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(PathRequest.toH2Console()).permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/swagger-ui.html",
@@ -66,7 +76,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtFilter jwtFilter(
-            com.novabank.security.JwtService jwtService,
+            JwtService jwtService,
             UserDetailsService userDetailsService,
             JsonAuthenticationEntryPoint authenticationEntryPoint
     ) {
