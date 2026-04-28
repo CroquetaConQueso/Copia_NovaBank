@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS cuentas (
     cliente_id BIGINT NOT NULL,
     saldo NUMERIC(15,2) NOT NULL DEFAULT 0.00 CHECK (saldo >= 0),
     fecha_creacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    version BIGINT NOT NULL DEFAULT 0,
     CONSTRAINT fk_cuentas_cliente
         FOREIGN KEY (cliente_id)
         REFERENCES clientes(id)

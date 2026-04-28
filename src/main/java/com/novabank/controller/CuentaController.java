@@ -3,6 +3,7 @@ package com.novabank.controller;
 import com.novabank.dto.CuentaCreateRequestDTO;
 import com.novabank.dto.CuentaResponseDTO;
 import com.novabank.dto.MovimientoResponseDTO;
+import com.novabank.dto.SaldoResponseDTO;
 import com.novabank.service.CuentaService;
 import com.novabank.service.OperacionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -60,6 +61,31 @@ public class CuentaController {
     })
     public ResponseEntity<CuentaResponseDTO> obtenerCuenta(@PathVariable Long id) {
         return ResponseEntity.ok(cuentaService.obtenerCuenta(id));
+    }
+
+    @GetMapping("/cuentas/numero/{numeroCuenta}")
+    @Operation(summary = "Obtener cuenta por numero", description = "Devuelve saldo y datos basicos de una cuenta por su numero")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cuenta encontrada"),
+            @ApiResponse(responseCode = "400", description = "Numero de cuenta invalido"),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido"),
+            @ApiResponse(responseCode = "404", description = "Cuenta no encontrada")
+    })
+    public ResponseEntity<CuentaResponseDTO> obtenerCuentaPorNumero(@PathVariable String numeroCuenta) {
+        return ResponseEntity.ok(cuentaService.obtenerCuentaPorNumero(numeroCuenta));
+    }
+
+    @GetMapping("/cuentas/{id}/saldo")
+    @Operation(summary = "Consultar saldo", description = "Devuelve el saldo actual de una cuenta")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Saldo obtenido"),
+            @ApiResponse(responseCode = "400", description = "Id invalido"),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido"),
+            @ApiResponse(responseCode = "404", description = "Cuenta no encontrada"),
+            @ApiResponse(responseCode = "409", description = "Modificacion concurrente (optimistic locking)")
+    })
+    public ResponseEntity<SaldoResponseDTO> consultarSaldo(@PathVariable Long id) {
+        return ResponseEntity.ok(cuentaService.consultarSaldo(id));
     }
 
     @GetMapping("/clientes/{clienteId}/cuentas")

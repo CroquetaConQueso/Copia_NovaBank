@@ -1,5 +1,7 @@
 package com.novabank.dto;
 
+import com.novabank.validation.ValidDni;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
@@ -15,7 +17,11 @@ public record ClienteRequestDTO(
         String apellidos,
 
         @NotBlank(message = "El DNI es obligatorio")
-        @Pattern(regexp = "\\d{8}[A-Za-z]", message = "El DNI debe tener 8 digitos y una letra")
+        @ValidDni(message = "El DNI no es valido")
+        @Schema(
+                description = "DNI español válido. Debe tener 8 dígitos y una letra correcta.",
+                example = "12345678Z"
+        )
         String dni,
 
         @NotBlank(message = "El email es obligatorio")

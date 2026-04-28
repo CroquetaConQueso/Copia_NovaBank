@@ -4,6 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.novabank.dto.CuentaCreateRequestDTO;
 import com.novabank.dto.CuentaResponseDTO;
 import com.novabank.dto.MovimientoResponseDTO;
+import com.novabank.dto.SaldoResponseDTO;
+import com.novabank.exception.GlobalExceptionHandler;
+import com.novabank.model.Cuenta;
 import com.novabank.model.TipoMovimiento;
 import com.novabank.service.CuentaService;
 import com.novabank.service.OperacionService;
@@ -12,7 +15,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
@@ -31,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(CuentaController.class)
 @AutoConfigureMockMvc(addFilters = false)
+@Import(GlobalExceptionHandler.class)
 class CuentaControllerTest {
 
     @Autowired
@@ -128,5 +134,47 @@ class CuentaControllerTest {
                         .param("fechaInicio", inicio.toString()))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.code").value("BAD_REQUEST"));
+    }
+
+    @Test
+    void obtenerCuentaPorNumeroDevuelveCuenta() throws Exception {
+        when(cuentaService.obtenerCuentaPorNumero("ES91210000000000000001")).thenReturn(
+                new CuentaResponseDTO(
+                        10L,
+                        "ES91210000000000000001",
+                        1L,
+                        BigDecimal.ZERO,
+                        LocalDateTime.now()
+                )
+        );
+
+        mockMvc.perform(get("/api/cuentas/numero/ES91210000000000000001"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(10))
+                .andExpect(jsonPath("$.numeroCuenta").value("ES91210000000000000001"));
+    }
+
+    @Test
+    void consultarSaldoDevuelveSaldo() throws Exception {
+        when(cuentaService.consultarSaldo(10L)).thenReturn(
+                new SaldoResponseDTO(10L, "ES91210000000000000001", new BigDecimal("125.50"))
+        );
+
+        mockMvc.perform(get("/api/cuentas/10/saldo"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cuentaId").value(10))
+                .andExpect(jsonPath("$.numeroCuenta").value("ES91210000000000000001"))
+                .andExpect(jsonPath("$.saldo").value(125.50));
+    }
+
+    @Test
+    void consultarSaldoCuandoHayOptimisticLockingDevuelve409() throws Exception {
+        when(cuentaService.consultarSaldo(1L))
+                .thenThrow(new ObjectOptimisticLockingFailureException(Cuenta.class, 1L));
+
+        mockMvc.perform(get("/api/cuentas/1/saldo"))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.code").value("CONCURRENT_MODIFICATION"))
+                .andExpect(jsonPath("$.message").value("La cuenta fue modificada por otra operacion. Vuelve a intentarlo."));
     }
 }

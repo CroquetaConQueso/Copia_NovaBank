@@ -3,7 +3,6 @@ package com.novabank.config;
 import com.novabank.security.JsonAuthenticationEntryPoint;
 import com.novabank.security.JwtFilter;
 import com.novabank.security.JwtService;
-import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -42,7 +41,7 @@ public class SecurityConfig {
                         exceptions.authenticationEntryPoint(authenticationEntryPoint)
                 )
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(PathRequest.toH2Console()).permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
                         .requestMatchers(
                                 "/api/auth/**",
                                 "/swagger-ui.html",

@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "NovaBank Digital Services - Modulo 3",
-    "description": "Flujo Postman para NovaBank Modulo 3: login, clientes, cuentas, operaciones y movimientos.",
+    "description": "Flujo Postman para NovaBank Modulo 3: login, clientes, cuentas, operaciones y movimientos.\n\nRecomendado ejecutar sobre base de datos limpia, ya que los datos de clientes usan DNI, email y teléfono únicos.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -36,6 +36,22 @@
     {
       "key": "numeroCuentaDestino",
       "value": ""
+    },
+    {
+      "key": "dniClienteOrigen",
+      "value": ""
+    },
+    {
+      "key": "dniClienteDestino",
+      "value": ""
+    },
+    {
+      "key": "fechaInicioMovimientos",
+      "value": "2024-01-01"
+    },
+    {
+      "key": "fechaFinMovimientos",
+      "value": "2030-12-31"
     }
   ],
   "item": [
@@ -156,7 +172,8 @@
             "exec": [
               "pm.test('cliente origen creado', function () { pm.response.to.have.status(201); });",
               "const json = pm.response.json();",
-              "pm.collectionVariables.set('clienteOrigenId', json.id);"
+              "pm.collectionVariables.set('clienteOrigenId', json.id);",
+              "pm.collectionVariables.set('dniClienteOrigen', json.dni);"
             ]
           }
         }
@@ -205,7 +222,8 @@
             "exec": [
               "pm.test('cliente destino creado', function () { pm.response.to.have.status(201); });",
               "const json = pm.response.json();",
-              "pm.collectionVariables.set('clienteDestinoId', json.id);"
+              "pm.collectionVariables.set('clienteDestinoId', json.id);",
+              "pm.collectionVariables.set('dniClienteDestino', json.dni);"
             ]
           }
         }
@@ -240,6 +258,189 @@
           "path": [
             "api",
             "clientes"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Clientes - Crear con DNI invalido devuelve 400",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('dni invalido devuelve 400', function () { pm.response.to.have.status(400); });",
+              "pm.test('codigo VALIDATION_ERROR', function () { pm.expect(pm.response.json().code).to.eql('VALIDATION_ERROR'); });",
+              "pm.test('fieldErrors contiene dni', function () { pm.expect(pm.response.json().fieldErrors).to.have.property('dni'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Cliente\",\n  \"apellidos\": \"Dni Invalido\",\n  \"dni\": \"12345678A\",\n  \"email\": \"dni.invalido@example.com\",\n  \"telefono\": \"600999888\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/clientes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "clientes"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Clientes - Crear duplicado devuelve 409",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('cliente duplicado devuelve 409', function () { pm.response.to.have.status(409); });",
+              "pm.test('codigo de conflicto correcto', function () { pm.expect(pm.response.json().code).to.eql('CONFLICT'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"nombre\": \"Ana\",\n  \"apellidos\": \"Duplicada\",\n  \"dni\": \"12345678Z\",\n  \"email\": \"ana.lopez@example.com\",\n  \"telefono\": \"600111222\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/clientes",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "clientes"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Clientes - Obtener cliente origen por ID",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('cliente origen encontrado por id', function () { pm.response.to.have.status(200); });",
+              "const json = pm.response.json();",
+              "pm.test('id coincide', function () { pm.expect(json.id).to.eql(Number(pm.collectionVariables.get('clienteOrigenId'))); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/clientes/{{clienteOrigenId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "clientes",
+            "{{clienteOrigenId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Clientes - Obtener cliente origen por DNI",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('cliente encontrado por dni', function () { pm.response.to.have.status(200); });",
+              "pm.test('dni coincide', function () { pm.expect(pm.response.json().dni).to.eql(pm.collectionVariables.get('dniClienteOrigen')); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/clientes?dni={{dniClienteOrigen}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "clientes"
+          ],
+          "query": [
+            {
+              "key": "dni",
+              "value": "{{dniClienteOrigen}}"
+            }
           ]
         }
       }
@@ -339,6 +540,168 @@
           ],
           "path": [
             "api",
+            "cuentas"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cuentas - Consultar cuenta origen",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('cuenta encontrada', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cuentas/{{cuentaOrigenId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cuentas",
+            "{{cuentaOrigenId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cuentas - Consultar cuenta origen por numero",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('cuenta encontrada por numero', function () { pm.response.to.have.status(200); });",
+              "pm.test('numero de cuenta coincide', function () { pm.expect(pm.response.json().numeroCuenta).to.eql(pm.collectionVariables.get('numeroCuentaOrigen')); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cuentas/numero/{{numeroCuentaOrigen}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cuentas",
+            "numero",
+            "{{numeroCuentaOrigen}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cuentas - Consultar saldo origen",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('saldo devuelve 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('respuesta contiene saldo', function () { pm.expect(pm.response.json()).to.have.property('saldo'); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cuentas/{{cuentaOrigenId}}/saldo",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cuentas",
+            "{{cuentaOrigenId}}",
+            "saldo"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cuentas - Listar cuentas de cliente origen",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('cuentas del cliente devuelven 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('cliente origen tiene al menos una cuenta', function () { pm.expect(pm.response.json().length).to.be.greaterThan(0); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/clientes/{{clienteOrigenId}}/cuentas",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "clientes",
+            "{{clienteOrigenId}}",
             "cuentas"
           ]
         }
@@ -539,7 +902,7 @@
       }
     },
     {
-      "name": "Cuentas - Consultar cuenta origen",
+      "name": "Cuentas - Consultar cuenta origen final",
       "event": [
         {
           "listen": "test",
@@ -574,6 +937,47 @@
             "api",
             "cuentas",
             "{{cuentaOrigenId}}"
+          ]
+        }
+      }
+    },
+    {
+      "name": "Cuentas - Consultar saldo origen final",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('saldo devuelve 200', function () { pm.response.to.have.status(200); });",
+              "pm.test('saldo final esperado', function () { pm.expect(Number(pm.response.json().saldo)).to.eql(150); });"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            {
+              "key": "token",
+              "value": "{{token}}",
+              "type": "string"
+            }
+          ]
+        },
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/cuentas/{{cuentaOrigenId}}/saldo",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "cuentas",
+            "{{cuentaOrigenId}}",
+            "saldo"
           ]
         }
       }
@@ -647,7 +1051,7 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{baseUrl}}/api/cuentas/{{cuentaOrigenId}}/movimientos?fechaInicio=2026-04-01&fechaFin=2026-04-26",
+          "raw": "{{baseUrl}}/api/cuentas/{{cuentaOrigenId}}/movimientos?fechaInicio={{fechaInicioMovimientos}}&fechaFin={{fechaFinMovimientos}}",
           "host": [
             "{{baseUrl}}"
           ],
@@ -660,11 +1064,11 @@
           "query": [
             {
               "key": "fechaInicio",
-              "value": "2026-04-01"
+              "value": "{{fechaInicioMovimientos}}"
             },
             {
               "key": "fechaFin",
-              "value": "2026-04-26"
+              "value": "{{fechaFinMovimientos}}"
             }
           ]
         }

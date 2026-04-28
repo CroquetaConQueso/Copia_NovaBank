@@ -1,8 +1,10 @@
 package com.novabank.exception;
 
 import com.novabank.dto.ErrorResponseDTO;
+import jakarta.persistence.OptimisticLockException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -31,6 +33,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDTO> handleDuplicateResource(DuplicateResourceException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
                 .body(ErrorResponseDTO.of("CONFLICT", ex.getMessage()));
+    }
+
+    @ExceptionHandler({
+            ObjectOptimisticLockingFailureException.class,
+            OptimisticLockException.class
+    })
+    public ResponseEntity<ErrorResponseDTO> handleOptimisticLocking(Exception ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ErrorResponseDTO.of(
+                        "CONCURRENT_MODIFICATION",
+                        "La cuenta fue modificada por otra operacion. Vuelve a intentarlo."
+                ));
     }
 
     @ExceptionHandler({

@@ -4,6 +4,7 @@ import com.novabank.dto.ClienteRequestDTO;
 import com.novabank.dto.ClienteResponseDTO;
 import com.novabank.exception.DuplicateResourceException;
 import com.novabank.exception.ResourceNotFoundException;
+import com.novabank.exception.ValidationException;
 import com.novabank.mapper.ClienteMapper;
 import com.novabank.model.Cliente;
 import com.novabank.repository.ClienteRepository;
@@ -12,6 +13,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
+import java.util.function.Predicate;
 
 @Service
 public class ClienteService {
@@ -51,6 +54,19 @@ public class ClienteService {
         return clienteMapper.toResponse(buscarCliente(id));
     }
 
+    @Transactional(readOnly = true)
+    public ClienteResponseDTO obtenerClientePorDni(String dni) {
+        if (dni == null || dni.isBlank()) {
+            throw new ValidationException("El DNI es obligatorio");
+        }
+
+        String dniNormalizado = dni.trim().toUpperCase(Locale.ROOT);
+
+        return clienteRepository.findByDni(dniNormalizado)
+                .map(clienteMapper::toResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("No existe ningun cliente con DNI " + dniNormalizado));
+    }
+
     Cliente buscarCliente(Long id) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException("El id del cliente debe ser positivo");
@@ -79,14 +95,24 @@ public class ClienteService {
     }
 
     private void validarDuplicados(ClienteRequestDTO request) {
-        if (clienteRepository.existsByDni(request.dni())) {
+        List<Cliente> duplicados = clienteRepository.buscarDuplicados(
+                request.dni(),
+                request.email(),
+                request.telefono()
+        );
+
+        if (contiene(duplicados, c -> request.dni().equals(c.getDni()))) {
             throw new DuplicateResourceException("Ya existe un cliente con el DNI " + request.dni());
         }
-        if (clienteRepository.existsByEmail(request.email())) {
+        if (contiene(duplicados, c -> request.email().equals(c.getEmail()))) {
             throw new DuplicateResourceException("Ya existe un cliente con el email " + request.email());
         }
-        if (clienteRepository.existsByTelefono(request.telefono())) {
+        if (contiene(duplicados, c -> request.telefono().equals(c.getTelefono()))) {
             throw new DuplicateResourceException("Ya existe un cliente con el telefono " + request.telefono());
         }
+    }
+
+    private boolean contiene(List<Cliente> clientes, Predicate<Cliente> predicate) {
+        return clientes != null && clientes.stream().anyMatch(predicate);
     }
 }

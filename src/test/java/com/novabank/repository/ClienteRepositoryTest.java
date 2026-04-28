@@ -20,7 +20,7 @@ class ClienteRepositoryTest {
         Cliente cliente = Cliente.builder()
                 .nombre("Ana")
                 .apellidos("Garcia Lopez")
-                .dni("12345678A")
+                .dni("12345678Z")
                 .email("ana.garcia@example.com")
                 .telefono("600111222")
                 .build();
@@ -29,8 +29,72 @@ class ClienteRepositoryTest {
 
         assertThat(guardado.getId()).isNotNull();
         assertThat(guardado.getFechaCreacion()).isNotNull();
-        assertThat(clienteRepository.findByDni("12345678A")).contains(guardado);
+        assertThat(clienteRepository.findByDni("12345678Z")).contains(guardado);
         assertThat(clienteRepository.findByEmail("ana.garcia@example.com")).contains(guardado);
         assertThat(clienteRepository.findByTelefono("600111222")).contains(guardado);
+    }
+
+    @Test
+    void buscarDuplicadosCuandoCoincideDniDevuelveCliente() {
+        Cliente cliente = Cliente.builder()
+                .nombre("Ana")
+                .apellidos("Garcia Lopez")
+                .dni("12345678Z")
+                .email("ana.garcia@example.com")
+                .telefono("600111222")
+                .build();
+
+        Cliente guardado = clienteRepository.save(cliente);
+
+        assertThat(clienteRepository.buscarDuplicados("12345678Z", "no@coincide.com", "699999999"))
+                .contains(guardado);
+    }
+
+    @Test
+    void buscarDuplicadosCuandoCoincideEmailDevuelveCliente() {
+        Cliente cliente = Cliente.builder()
+                .nombre("Ana")
+                .apellidos("Garcia Lopez")
+                .dni("12345678Z")
+                .email("ana.garcia@example.com")
+                .telefono("600111222")
+                .build();
+
+        Cliente guardado = clienteRepository.save(cliente);
+
+        assertThat(clienteRepository.buscarDuplicados("99999999R", "ana.garcia@example.com", "699999999"))
+                .contains(guardado);
+    }
+
+    @Test
+    void buscarDuplicadosCuandoCoincideTelefonoDevuelveCliente() {
+        Cliente cliente = Cliente.builder()
+                .nombre("Ana")
+                .apellidos("Garcia Lopez")
+                .dni("12345678Z")
+                .email("ana.garcia@example.com")
+                .telefono("600111222")
+                .build();
+
+        Cliente guardado = clienteRepository.save(cliente);
+
+        assertThat(clienteRepository.buscarDuplicados("99999999R", "no@coincide.com", "600111222"))
+                .contains(guardado);
+    }
+
+    @Test
+    void buscarDuplicadosCuandoNoCoincideNadaDevuelveListaVacia() {
+        Cliente cliente = Cliente.builder()
+                .nombre("Ana")
+                .apellidos("Garcia Lopez")
+                .dni("12345678Z")
+                .email("ana.garcia@example.com")
+                .telefono("600111222")
+                .build();
+
+        clienteRepository.save(cliente);
+
+        assertThat(clienteRepository.buscarDuplicados("99999999R", "no@coincide.com", "699999999"))
+                .isEmpty();
     }
 }

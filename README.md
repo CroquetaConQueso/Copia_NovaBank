@@ -81,12 +81,12 @@ $env:JWT_SECRET="novabank-secret-key-for-jwt-generation-2026"
 $env:JWT_EXPIRATION="3600000"
 ```
 
-Valores por defecto principales:
+Valores por defecto principales (ver `src/main/resources/application.yml`):
 
 - `NOVABANK_DB_URL`: `jdbc:postgresql://localhost:5432/novabank`
 - `NOVABANK_DB_USER`: `postgres`
-- `NOVABANK_DB_PASSWORD`: `postgres`
-- `JWT_EXPIRATION`: `3600000`
+- `NOVABANK_DB_PASSWORD`: `usuario`
+- `JWT_EXPIRATION`: `86400000`
 
 Si la base de datos se crea manualmente, puede usarse como referencia:
 
@@ -177,14 +177,17 @@ Authorization: Bearer <token>
 | GET | `/api/clientes` | Protegido | Lista clientes |
 | POST | `/api/clientes` | Protegido | Crea cliente |
 | GET | `/api/clientes/{id}` | Protegido | Obtiene cliente |
+| GET | `/api/clientes?dni=...` | Protegido | Obtiene cliente por DNI |
 | POST | `/api/cuentas` | Protegido | Crea cuenta |
 | GET | `/api/cuentas/{id}` | Protegido | Obtiene cuenta |
+| GET | `/api/cuentas/numero/{numeroCuenta}` | Protegido | Obtiene cuenta por número |
+| GET | `/api/cuentas/{id}/saldo` | Protegido | Consulta saldo de cuenta |
 | GET | `/api/clientes/{clienteId}/cuentas` | Protegido | Lista cuentas de cliente |
 | POST | `/api/operaciones/deposito` | Protegido | Registra deposito |
 | POST | `/api/operaciones/retiro` | Protegido | Registra retirada |
 | POST | `/api/operaciones/transferencia` | Protegido | Registra transferencia |
 | GET | `/api/cuentas/{id}/movimientos` | Protegido | Lista movimientos de cuenta |
-| GET | `/api/cuentas/{id}/movimientos?fechaInicio=2026-04-01&fechaFin=2026-04-26` | Protegido | Lista movimientos por rango |
+| GET | `/api/cuentas/{id}/movimientos?fechaInicio=YYYY-MM-DD&fechaFin=YYYY-MM-DD` | Protegido | Lista movimientos por rango |
 
 ## Errores API
 
@@ -217,7 +220,9 @@ La coleccion esta en:
 docs/postman/NovaBank-Modulo-3.postman_collection.json
 ```
 
-Flujo cubierto: login, creacion de clientes, creacion de cuentas, deposito, retirada, transferencia, consulta de movimientos y validacion de error 422.
+Flujo cubierto: login, clientes (incluye negativos: DNI inválido y duplicados), cuentas (incluye consulta por número y saldo), operaciones y movimientos (incluye rango de fechas).
+
+Nota: recomendado ejecutar sobre base de datos limpia porque DNI/email/teléfono son únicos.
 
 ## Entrega limpia
 

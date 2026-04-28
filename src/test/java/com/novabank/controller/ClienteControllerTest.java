@@ -43,7 +43,7 @@ class ClienteControllerTest {
                 1L,
                 "Ana",
                 "Garcia",
-                "12345678A",
+                "12345678Z",
                 "ana@example.com",
                 "600111222",
                 LocalDateTime.now(),
@@ -54,7 +54,7 @@ class ClienteControllerTest {
         ClienteRequestDTO request = new ClienteRequestDTO(
                 "Ana",
                 "Garcia",
-                "12345678A",
+                "12345678Z",
                 "ana@example.com",
                 "600111222"
         );
@@ -64,7 +64,7 @@ class ClienteControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.dni").value("12345678A"));
+                .andExpect(jsonPath("$.dni").value("12345678Z"));
     }
 
     @Test
@@ -89,6 +89,24 @@ class ClienteControllerTest {
     }
 
     @Test
+    void crearClienteConDniInvalidoDevuelve400() throws Exception {
+        ClienteRequestDTO request = new ClienteRequestDTO(
+                "Ana",
+                "Garcia",
+                "12345678A",
+                "ana@example.com",
+                "600111222"
+        );
+
+        mockMvc.perform(post("/api/clientes")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.code").value("VALIDATION_ERROR"))
+                .andExpect(jsonPath("$.fieldErrors.dni").exists());
+    }
+
+    @Test
     void obtenerClienteNoEncontradoDevuelve404() throws Exception {
         when(clienteService.obtenerCliente(99L))
                 .thenThrow(new ResourceNotFoundException("No existe ningun cliente con id 99"));
@@ -102,12 +120,12 @@ class ClienteControllerTest {
     @Test
     void crearClienteDuplicadoDevuelve409() throws Exception {
         when(clienteService.crearCliente(any(ClienteRequestDTO.class)))
-                .thenThrow(new DuplicateResourceException("Ya existe un cliente con el DNI 12345678A"));
+                .thenThrow(new DuplicateResourceException("Ya existe un cliente con el DNI 12345678Z"));
 
         ClienteRequestDTO request = new ClienteRequestDTO(
                 "Ana",
                 "Garcia",
-                "12345678A",
+                "12345678Z",
                 "ana@example.com",
                 "600111222"
         );
@@ -117,7 +135,7 @@ class ClienteControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isConflict())
                 .andExpect(jsonPath("$.code").value("CONFLICT"))
-                .andExpect(jsonPath("$.message").value("Ya existe un cliente con el DNI 12345678A"));
+                .andExpect(jsonPath("$.message").value("Ya existe un cliente con el DNI 12345678Z"));
     }
 
     @Test
@@ -127,7 +145,7 @@ class ClienteControllerTest {
                         1L,
                         "Ana",
                         "Garcia",
-                        "12345678A",
+                        "12345678Z",
                         "ana@example.com",
                         "600111222",
                         LocalDateTime.now(),
@@ -139,5 +157,26 @@ class ClienteControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].id").value(1))
                 .andExpect(jsonPath("$[0].email").value("ana@example.com"));
+    }
+
+    @Test
+    void obtenerClientePorDniDevuelveCliente() throws Exception {
+        when(clienteService.obtenerClientePorDni("12345678Z")).thenReturn(
+                new ClienteResponseDTO(
+                        1L,
+                        "Ana",
+                        "Garcia",
+                        "12345678Z",
+                        "ana@example.com",
+                        "600111222",
+                        LocalDateTime.now(),
+                        0
+                )
+        );
+
+        mockMvc.perform(get("/api/clientes").param("dni", "12345678Z"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(1))
+                .andExpect(jsonPath("$.dni").value("12345678Z"));
     }
 }

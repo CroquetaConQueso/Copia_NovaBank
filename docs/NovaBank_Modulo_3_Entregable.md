@@ -70,6 +70,11 @@ Las fechas se asignan desde JPA/aplicacion con callbacks `@PrePersist`. Los `DEF
 
 Los RequestDTO reciben datos de entrada y aplican validaciones con `jakarta.validation`.
 
+Validación destacada:
+- `@ValidDni` sustituye la validación superficial del DNI.
+- Valida formato y letra real del DNI español (8 dígitos + letra correcta).
+- `@NotBlank` sigue cubriendo obligatoriedad.
+
 Los ResponseDTO definen lo que se expone al cliente HTTP.
 
 DTOs principales:
@@ -78,6 +83,7 @@ DTOs principales:
 - `ClienteResponseDTO`
 - `CuentaCreateRequestDTO`
 - `CuentaResponseDTO`
+- `SaldoResponseDTO`
 - `OperacionRequestDTO`
 - `TransferenciaRequestDTO`
 - `MovimientoResponseDTO`
@@ -86,6 +92,11 @@ DTOs principales:
 - `ErrorResponseDTO`
 
 Los mappers son manuales y no acceden a repositorios.
+
+Contratos de mappers (ISP):
+- `ResponseMapper<E, R>` define conversión entidad → response DTO.
+- `RequestMapper<D, E>` define conversión request DTO → entidad.
+No se usa una interfaz genérica gigante para evitar obligar a métodos innecesarios.
 
 ## 5. Seguridad
 
@@ -132,21 +143,48 @@ Las respuestas usan `ErrorResponseDTO` con:
 ## 7. Endpoints principales
 
 - `POST /api/auth/login`
-- `GET /api/clientes`
+
+Clientes:
 - `POST /api/clientes`
+- `GET /api/clientes`
 - `GET /api/clientes/{id}`
+- `GET /api/clientes?dni=...` (compatibilidad con el flujo del Módulo 1)
+
+Cuentas:
 - `POST /api/cuentas`
 - `GET /api/cuentas/{id}`
+- `GET /api/cuentas/numero/{numeroCuenta}`
 - `GET /api/clientes/{clienteId}/cuentas`
+- `GET /api/cuentas/{id}/saldo`
+
+Operaciones:
 - `POST /api/operaciones/deposito`
 - `POST /api/operaciones/retiro`
 - `POST /api/operaciones/transferencia`
+
+Movimientos:
 - `GET /api/cuentas/{id}/movimientos`
-- `GET /api/cuentas/{id}/movimientos?fechaInicio=2026-04-01&fechaFin=2026-04-26`
+- `GET /api/cuentas/{id}/movimientos?fechaInicio=YYYY-MM-DD&fechaFin=YYYY-MM-DD`
 
 Los numeros de cuenta se generan con formato `ES91210000` + 12 digitos secuenciales. La estrategia actual es simple; como mejora futura se recomienda sustituirla por una secuencia de base de datos si se requiere robustez ante concurrencia alta.
 
 Las relaciones JPA entre clientes, cuentas y movimientos no usan cascadas agresivas ni `orphanRemoval`, para evitar borrado accidental de historico financiero.
+
+### Duplicados (Cliente)
+La validación de duplicados de `Cliente` se optimiza mediante una única consulta en repositorio (`@Query`) que detecta coincidencias por:
+- DNI
+- email
+- teléfono
+
+Después el servicio mantiene el orden funcional del mensaje de conflicto:
+1. DNI
+2. email
+3. teléfono
+
+### Concurrencia (Cuenta)
+- `@Version` se añade solo en `Cuenta` porque es la entidad que contiene saldo.
+- Hibernate detecta conflictos concurrentes (optimistic locking).
+- La API devuelve `409 CONCURRENT_MODIFICATION` cuando detecta modificación concurrente.
 
 ## 8. Testing por capas
 
@@ -172,6 +210,21 @@ El flujo end-to-end prueba login, cliente, cuenta, deposito, retirada, transfere
 - OpenAPI JSON: `/v3/api-docs`
 - Coleccion Postman: `docs/postman/NovaBank-Modulo-3.postman_collection.json`
 
-## 10. Estado final
+La colección Postman cubre:
+- login y token JWT
+- flujo de clientes/cuentas/operaciones/movimientos
+- casos negativos (DNI inválido, duplicados, saldo insuficiente)
+
+Nota: recomendado ejecutar la colección sobre base de datos limpia, ya que DNI/email/teléfono son únicos.
+
+## 10. SOLID aplicado (con clases reales)
+
+- **SRP**: `ClienteController`, `CuentaController`, `OperacionController` se limitan a HTTP; `ClienteService`, `CuentaService`, `OperacionService` concentran negocio; `ClienteRepository`, `CuentaRepository`, `MovimientoRepository` se limitan a persistencia.
+- **ISP**: `ResponseMapper` y `RequestMapper` separan contratos pequeños de conversión.
+- **DIP**: servicios dependen de repositorios (interfaces Spring Data) y de estrategias (`GeneradorNumeroCuentaStrategy`).
+- **OCP**: la validación de DNI se añade mediante `@ValidDni` sin cambiar controladores.
+- **LSP**: los contratos `ResponseMapper`/`RequestMapper` permiten múltiples implementaciones (mappers) sin afectar a consumidores.
+
+## 11. Estado final
 
 El modulo queda preparado como API REST Spring Boot, con el codigo legacy de consola/JDBC eliminado del flujo principal y con validacion automatizada mediante Maven.

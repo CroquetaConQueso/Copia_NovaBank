@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -63,5 +64,17 @@ public class ClienteController {
     })
     public ResponseEntity<ClienteResponseDTO> obtenerCliente(@PathVariable Long id) {
         return ResponseEntity.ok(clienteService.obtenerCliente(id));
+    }
+
+    @GetMapping(params = "dni")
+    @Operation(summary = "Obtener cliente por DNI", description = "Devuelve el detalle de un cliente por su DNI")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Cliente encontrado"),
+            @ApiResponse(responseCode = "400", description = "DNI invalido"),
+            @ApiResponse(responseCode = "401", description = "Token ausente o invalido"),
+            @ApiResponse(responseCode = "404", description = "Cliente no encontrado")
+    })
+    public ResponseEntity<ClienteResponseDTO> obtenerClientePorDni(@RequestParam String dni) {
+        return ResponseEntity.ok(clienteService.obtenerClientePorDni(dni));
     }
 }

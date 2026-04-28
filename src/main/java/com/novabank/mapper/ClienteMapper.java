@@ -2,12 +2,15 @@ package com.novabank.mapper;
 
 import com.novabank.dto.ClienteRequestDTO;
 import com.novabank.dto.ClienteResponseDTO;
+import com.novabank.mapper.contract.RequestMapper;
+import com.novabank.mapper.contract.ResponseMapper;
 import com.novabank.model.Cliente;
 import org.springframework.stereotype.Component;
 
 @Component
-public class ClienteMapper {
+public class ClienteMapper implements ResponseMapper<Cliente, ClienteResponseDTO>, RequestMapper<ClienteRequestDTO, Cliente> {
 
+    @Override
     public Cliente toEntity(ClienteRequestDTO dto) {
         return Cliente.builder()
                 .nombre(dto.nombre())
@@ -18,6 +21,7 @@ public class ClienteMapper {
                 .build();
     }
 
+    @Override
     public ClienteResponseDTO toResponse(Cliente cliente) {
         int numeroCuentas = cliente.getCuentas() == null ? 0 : cliente.getCuentas().size();
 

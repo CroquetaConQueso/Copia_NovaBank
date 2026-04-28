@@ -47,7 +47,7 @@ class NovaBankEndToEndTest {
                 new ClienteRequestDTO(
                         "Ana",
                         "Garcia Lopez",
-                        "12345678A",
+                        "12345678Z",
                         "ana.e2e@example.com",
                         "600111222"
                 )
@@ -57,7 +57,7 @@ class NovaBankEndToEndTest {
                 new ClienteRequestDTO(
                         "Luis",
                         "Perez Martin",
-                        "87654321B",
+                        "87654321X",
                         "luis.e2e@example.com",
                         "600333444"
                 )
